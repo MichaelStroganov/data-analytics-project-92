@@ -37,4 +37,43 @@ left join employees e
 left join products p 
  on p.product_id = s.product_id 
 group by concat(e.first_name,' ',e.last_name), s.sale_date
-order by extract(isodow from s.sale_date) ASC
+order by extract(isodow from s.sale_date) asc
+
+
+-- Данный отчет содержит информацию о количествt покупателей в разных возрастных группах
+select case 
+	when age between 16 and 25 then '16-25'
+	when age between 26 and 40 then '26-40'
+	when age > 40 then '40+'
+end as age_category, count(customer_id)
+from customers c 
+group by case 
+	when age between 16 and 25 then '16-25'
+	when age between 26 and 40 then '26-40'
+	when age > 40 then '40+'
+end
+
+
+-- Данный отчет содержит информацию по количеству уникальных покупателей и выручке, которую они принесли.
+select to_char(s.sale_date, 'YYYY-MM') as date, count(distinct s.customer_id), sum(p.price * s.quantity) as income
+from sales s
+left join customers c 
+ on s.customer_id = c.customer_id
+left join products p 
+ on p.product_id = s.product_id 
+group by to_char(s.sale_date, 'YYYY-MM')
+order by to_char(s.sale_date, 'YYYY-MM')
+
+
+
+-- Данный отчет содержит информацию о покупателях, первая покупка которых была в ходе проведения акций
+select concat(c.first_name,' ',c.last_name) as name, min(sale_date) as min_dt, concat(e.first_name,' ',e.last_name) as seller
+from sales s
+left join customers c 
+ on s.customer_id = c.customer_id
+left join products p 
+ on p.product_id = s.product_id 
+left join employees e 
+ on e.employee_id = s.sales_person_id 
+group by concat(c.first_name,' ',c.last_name), concat(e.first_name,' ',e.last_name)
+having sum(p.price * s.quantity) = 0
